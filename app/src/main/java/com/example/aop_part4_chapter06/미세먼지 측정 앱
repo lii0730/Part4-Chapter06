@@ -1,0 +1,25 @@
+우리동네 미세먼지 측정 앱
+
+1. 앱 초기 실행 시 위치 권한 요청 팝업
+2. 허용 하면 현재 위치의 미세먼지 정보를 가져옴
+    - 에어코리아 대기오염 정보
+    - 에어코리아 측정소 정보
+    - GPS에서 얻어온 좌표계를 TM 좌표계로 변환 하는 과정 필요(별도 API 사용_ 카카오 API)
+    https://developers.kakao.com/docs/latest/ko/local/dev-guide#trans-coord
+
+3. 홈 화면에 위젯 추가 기능
+
+
+- Location Manager
+- Retrofit2
+- Coroutine
+- App Widget
+
+
+Work Flow
+
+1. 안드로이드에서 경, 위도 획득
+2. 획득한 경,위도 좌표를 카카오 API를 이용해서 TM 좌표로 변환
+3. 변환된 좌표를 가지고 공공 API 에어코리아 근접 측정소명 획득
+4. 획득한 측정소명을 가지고 공공 API 대기오염 정보 획득
+5. 위젯 추가
