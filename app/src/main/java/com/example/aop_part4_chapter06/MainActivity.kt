@@ -14,7 +14,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.example.aop_part4_chapter06.databinding.ActivityMainBinding
-import com.example.aop_part4_chapter06.service.RequestService
+import com.example.aop_part4_chapter06.service.AirKoreaApiService
+import com.example.aop_part4_chapter06.service.KakaoApiService
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
@@ -32,6 +33,12 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 			convertLocationSystem(location)
 			mLocationManager.removeUpdates(mLocationListener)
 		}
+
+		override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) = Unit
+
+		override fun onProviderEnabled(p0: String?) = Unit
+
+		override fun onProviderDisabled(p0: String?) = Unit
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -149,15 +156,15 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 	private fun convertLocationSystem(location: Location) {
 		launch {
 			withContext(Dispatchers.IO) {
-				val response = RetrofitClient.getKaKaoRetrofit().create(RequestService::class.java)
+				val response = RetrofitClient.getKaKaoRetrofit().create(KakaoApiService::class.java)
 					.getTMSystemLocation(
 						location.longitude,
 						location.latitude,
 						output_coord = "TM"
 					)
 				//TODO: response -> TM 좌표계로 변환된 값 (x : longitude, y : latitude)
-				val response2 = RetrofitClient.getAirKoreaRetrofit().create(RequestService::class.java)
-					.getStationName("json", BuildConfig.AIR_KOREA_API_KEY, response.documents[0].x, response.documents[0].y)
+				val response2 = RetrofitClient.getAirKoreaRetrofit().create(AirKoreaApiService::class.java)
+					.getStationName(response.documents[0].x, response.documents[0].y)
 
 				withContext(Dispatchers.Main) {
 					Log.i("getStationName", response2.response.body.items.toString())
@@ -165,6 +172,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 			}
 		}
 	}
+
 
 	override val coroutineContext: CoroutineContext
 		get() = Dispatchers.Main + job
