@@ -9,11 +9,14 @@ import android.location.LocationListener
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import com.bumptech.glide.Glide
 import com.example.aop_part4_chapter06.databinding.ActivityMainBinding
+import com.example.aop_part4_chapter06.response.AirKorea.AirKoreaData
+import com.example.aop_part4_chapter06.response.AirKorea.AirQuality.Item
+import com.example.aop_part4_chapter06.response.Kakao.Documents
 import com.example.aop_part4_chapter06.service.AirKoreaApiService
 import com.example.aop_part4_chapter06.service.KakaoApiService
 import kotlinx.coroutines.*
@@ -26,19 +29,18 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 	private lateinit var mLocationListener: LocationListener
 	private val job = Job()
 
-	inner class myLocationListener : LocationListener {
+	inner class MyLocationListener : LocationListener {
 		override fun onLocationChanged(location: Location) {
-//            Log.i("LocationChanged", "${location.latitude} ${location.longitude}")
-			//TODO: 좌표 변환
-			convertLocationSystem(location)
+			//TODO: 대기오염 정보 획득
+			fetchAirQualityData(location)
 			mLocationManager.removeUpdates(mLocationListener)
 		}
 
 		override fun onStatusChanged(p0: String?, p1: Int, p2: Bundle?) = Unit
 
-		override fun onProviderEnabled(p0: String?) = Unit
+		override fun onProviderEnabled(provider: String) = Unit
 
-		override fun onProviderDisabled(p0: String?) = Unit
+		override fun onProviderDisabled(provider: String) = Unit
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +59,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
 	private fun initLocationManager() {
 		mLocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-		mLocationListener = myLocationListener()
+		mLocationListener = MyLocationListener()
 	}
 
 	@SuppressLint("MissingPermission")
@@ -87,7 +89,6 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 		) {
 			//TODO: 권한 허용 상태 -> 미세먼지 정보 표출
 			setLocationListener()
-			Toast.makeText(this, "권한 허용", Toast.LENGTH_SHORT).show()
 		} else {
 			//TODO: 권한 거부 상태 -> 권한 요청 work flow
 			ActivityCompat.requestPermissions(
@@ -153,22 +154,199 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 		builder.show()
 	}
 
-	private fun convertLocationSystem(location: Location) {
+	private fun fetchAirQualityData(location: Location) {
 		launch {
 			withContext(Dispatchers.IO) {
-				val response = RetrofitClient.getKaKaoRetrofit().create(KakaoApiService::class.java)
-					.getTMSystemLocation(
-						location.longitude,
-						location.latitude,
-						output_coord = "TM"
-					)
-				//TODO: response -> TM 좌표계로 변환된 값 (x : longitude, y : latitude)
-				val response2 = RetrofitClient.getAirKoreaRetrofit().create(AirKoreaApiService::class.java)
-					.getStationName(response.documents[0].x, response.documents[0].y)
 
+				val tmLocation = convertLocationSystem(location)
+
+				val station = getNearByMonitoringStation(tmLocation!!.x, tmLocation!!.y)
+
+				val data = station?.let { getData(it.stationName!!) }
 				withContext(Dispatchers.Main) {
-					Log.i("getStationName", response2.response.body.items.toString())
+
+					bindData(data, station)
 				}
+			}
+		}
+	}
+
+	//TODO: 좌표 변환
+	private suspend fun convertLocationSystem(location: Location): Documents? {
+		return RetrofitClient.getKaKaoRetrofit().create(KakaoApiService::class.java)
+			.getTMSystemLocation(
+				location.longitude,
+				location.latitude,
+				output_coord = "TM"
+			).documents.firstOrNull()
+	}
+
+	//TODO: TM 좌표계로 변환된 값 (x : longitude, y : latitude)으로 주변 관측소 조회
+	private suspend fun getNearByMonitoringStation(
+		longitude: Double,
+		latitude: Double
+	): AirKoreaData? {
+		return RetrofitClient.getAirKoreaRetrofit().create(AirKoreaApiService::class.java)
+			.getStationName(longitude, latitude).response.body.items?.minByOrNull {
+				it.tm!!
+			}
+	}
+
+	//TODO: 가장 가까운 관측소에서 측정된 대기오염 정보 조회
+	private suspend fun getData(stationName: String): Item? {
+		return RetrofitClient.getAirKoreaRetrofit().create(AirKoreaApiService::class.java)
+			.getAirQualities(stationName).response?.body?.items?.firstOrNull()
+	}
+
+	//TODO: 데이터 바인딩
+	@SuppressLint("SetTextI18n")
+	private fun bindData(item: Item?, station: AirKoreaData?) = with(binding) {
+		item?.let { item ->
+			//TODO: item -> 대기오염 정보 / station -> 측정소 정보
+			stationNameTextView.text = station?.stationName
+			stationAddressTextView.text = "측정소 위치: ${station?.addr}"
+			pm10ValueTextView.text = "${item.pm10Value} " + getString(R.string.pmUnit)
+			pm25ValueTextView.text = "${item.pm25Value} " + getString(R.string.pmUnit)
+			setKhaiGradeView(item)
+			setSo2Data(item)
+			setCoData(item)
+			setO3Data(item)
+			setNo2Data(item)
+		}
+	}
+
+	private fun setKhaiGradeView(item: Item?) = with(binding) {
+		when (item?.khaiGrade) {
+			"1" -> {
+				khaiGradeTextView.text = "좋음"
+				Glide.with(khaiGradeImageView)
+					.load(R.drawable.grade_like)
+					.into(khaiGradeImageView)
+
+				mainLayout.setBackgroundResource(R.color.background_grade_like)
+			}
+			"2" -> {
+				khaiGradeTextView.text = "보통"
+				Glide.with(khaiGradeImageView)
+					.load(R.drawable.grade_normal)
+					.into(khaiGradeImageView)
+
+				mainLayout.setBackgroundResource(R.color.background_grade_normal)
+			}
+			"3" -> {
+				khaiGradeTextView.text = "나쁨"
+				Glide.with(khaiGradeImageView)
+					.load(R.drawable.grade_bad)
+					.into(khaiGradeImageView)
+
+				mainLayout.setBackgroundResource(R.color.background_grade_bad)
+			}
+			"4" -> {
+				khaiGradeTextView.text = "매우나쁨"
+				Glide.with(khaiGradeImageView)
+					.load(R.drawable.grade_very_bad)
+					.into(khaiGradeImageView)
+
+				mainLayout.setBackgroundResource(R.color.background_grade_very_bad)
+			}
+			else -> {
+				khaiGradeTextView.text = "측정불가"
+				Glide.with(khaiGradeImageView)
+					.load(R.drawable.grade_unknown)
+					.into(khaiGradeImageView)
+			}
+		}
+	}
+
+	@SuppressLint("SetTextI18n")
+	private fun setSo2Data(item: Item?) = with(binding){
+		so2Value.labelTextView.text = "아황산가스"
+		so2Value.valueTextView.text = item?.so2Value +" ppm"
+		when(item?.so2Grade) {
+			"1" -> {
+				so2Value.gradeTextView.text = getString(R.string.grade_like_text)
+			}
+			"2" -> {
+				so2Value.gradeTextView.text = getString(R.string.grade_normal_text)
+			}
+			"3" -> {
+				so2Value.gradeTextView.text = getString(R.string.grade_bad_text)
+			}
+			"4" -> {
+				so2Value.gradeTextView.text = getString(R.string.grade_very_bad_text)
+			}
+			else -> {
+				so2Value.gradeTextView.text = "측정 불가"
+			}
+		}
+	}
+
+	@SuppressLint("SetTextI18n")
+	private fun setCoData(item: Item?) = with(binding){
+		coValue.labelTextView.text = "일산화탄소"
+		coValue.valueTextView.text = item?.coValue +" ppm"
+		when(item?.coGrade) {
+			"1" -> {
+				coValue.gradeTextView.text = getString(R.string.grade_like_text)
+			}
+			"2" -> {
+				coValue.gradeTextView.text = getString(R.string.grade_normal_text)
+			}
+			"3" -> {
+				coValue.gradeTextView.text = getString(R.string.grade_bad_text)
+			}
+			"4" -> {
+				coValue.gradeTextView.text = getString(R.string.grade_very_bad_text)
+			}
+			else -> {
+				coValue.gradeTextView.text = "측정 불가"
+			}
+		}
+	}
+
+
+	@SuppressLint("SetTextI18n")
+	private fun setNo2Data(item: Item?) = with(binding) {
+		no2Value.labelTextView.text = "이산화질소"
+		no2Value.valueTextView.text = item?.no2Value +" ppm"
+		when(item?.no2Grade) {
+			"1" -> {
+				no2Value.gradeTextView.text = getString(R.string.grade_like_text)
+			}
+			"2" -> {
+				no2Value.gradeTextView.text = getString(R.string.grade_normal_text)
+			}
+			"3" -> {
+				no2Value.gradeTextView.text = getString(R.string.grade_bad_text)
+			}
+			"4" -> {
+				no2Value.gradeTextView.text = getString(R.string.grade_very_bad_text)
+			}
+			else -> {
+				no2Value.gradeTextView.text = "측정 불가"
+			}
+		}
+	}
+
+	@SuppressLint("SetTextI18n")
+	private fun setO3Data(item: Item?) = with(binding) {
+		o3Value.labelTextView.text = "오존"
+		o3Value.valueTextView.text = item?.o3Value +" ppm"
+		when(item?.o3Grade) {
+			"1" -> {
+				o3Value.gradeTextView.text = getString(R.string.grade_like_text)
+			}
+			"2" -> {
+				o3Value.gradeTextView.text = getString(R.string.grade_normal_text)
+			}
+			"3" -> {
+				o3Value.gradeTextView.text = getString(R.string.grade_bad_text)
+			}
+			"4" -> {
+				o3Value.gradeTextView.text = getString(R.string.grade_very_bad_text)
+			}
+			else -> {
+				o3Value.gradeTextView.text = "측정 불가"
 			}
 		}
 	}

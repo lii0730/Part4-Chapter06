@@ -15,7 +15,7 @@ object RetrofitClient {
 	fun getAirKoreaRetrofit() : Retrofit {
 		return Retrofit.Builder()
 			.baseUrl(AIR_BASE_URL)
-			.client(OkHttpClient())
+			.client(buildHttpClient())
 			.addConverterFactory(GsonConverterFactory.create(gson))
 			.build()
 	}

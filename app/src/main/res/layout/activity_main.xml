@@ -1,18 +1,177 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:id="@+id/mainLayout"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/background_grade_normal"
+	tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+	<ImageView
+		android:id="@+id/khaiGradeImageView"
+		android:layout_width="100dp"
+		android:layout_height="100dp"
+		android:layout_marginTop="10dp"
+		app:layout_constraintBottom_toTopOf="@+id/pm10TextView"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/khaiGradeTextView"
+		tools:src="@drawable/grade_normal" />
+
+	<LinearLayout
+		android:id="@+id/itemLayout"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:orientation="vertical"
+		app:layout_constraintBottom_toTopOf="@+id/divideView2"
+		app:layout_constraintEnd_toEndOf="@+id/divideView"
+		app:layout_constraintStart_toStartOf="@+id/divideView"
+		app:layout_constraintTop_toBottomOf="@+id/divideView">
+
+		<include
+			android:id="@+id/so2Value"
+			layout="@layout/air_quality_item_layout" />
+
+		<include
+			android:id="@+id/coValue"
+			layout="@layout/air_quality_item_layout" />
+
+		<include
+			android:id="@+id/o3Value"
+			layout="@layout/air_quality_item_layout" />
+
+		<include
+			android:id="@+id/no2Value"
+			layout="@layout/air_quality_item_layout" />
+
+	</LinearLayout>
+
+	<TextView
+		android:id="@+id/stationNameTextView"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="30dp"
+		android:textColor="@color/white"
+		android:textSize="40sp"
+		android:textStyle="bold"
+		app:layout_constraintBottom_toTopOf="@+id/khaiGradeTextView"
+		app:layout_constraintLeft_toLeftOf="parent"
+		app:layout_constraintRight_toRightOf="parent"
+		app:layout_constraintTop_toTopOf="parent"
+		tools:text="강남대로" />
+
+	<TextView
+		android:id="@+id/khaiGradeTextView"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="10dp"
+		android:textColor="@color/white_80"
+		android:textSize="20sp"
+		android:textStyle="bold"
+		app:layout_constraintBottom_toTopOf="@+id/khaiGradeImageView"
+		app:layout_constraintLeft_toLeftOf="parent"
+		app:layout_constraintRight_toRightOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/stationNameTextView"
+		tools:text="보통" />
+
+	<TextView
+		android:id="@+id/pm10TextView"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="20dp"
+		android:text="미세먼지: "
+		android:textColor="@color/white"
+		android:textSize="18sp"
+		app:layout_constraintEnd_toStartOf="@+id/pm10ValueTextView"
+		app:layout_constraintHorizontal_bias="0.1"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintTop_toBottomOf="@+id/khaiGradeImageView" />
+
+	<TextView
+		android:id="@+id/pm10ValueTextView"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="20dp"
+		android:textColor="@color/white"
+		android:textSize="18sp"
+		app:layout_constraintEnd_toStartOf="@+id/pm25TextView"
+		app:layout_constraintStart_toEndOf="@+id/pm10TextView"
+		app:layout_constraintTop_toBottomOf="@+id/khaiGradeImageView"
+		tools:text="54 ㎍/㎥" />
+
+	<TextView
+		android:id="@+id/pm25TextView"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="20dp"
+		android:text="초미세먼지: "
+		android:textColor="@color/white"
+		android:textSize="18sp"
+		app:layout_constraintEnd_toStartOf="@+id/pm25ValueTextView"
+		app:layout_constraintHorizontal_bias="0.9"
+		app:layout_constraintStart_toEndOf="@+id/pm10ValueTextView"
+		app:layout_constraintTop_toBottomOf="@+id/khaiGradeImageView" />
+
+	<TextView
+		android:id="@+id/pm25ValueTextView"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="20dp"
+		android:textColor="@color/white"
+		android:textSize="18sp"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toEndOf="@+id/pm25TextView"
+		app:layout_constraintTop_toBottomOf="@+id/khaiGradeImageView"
+		tools:text="37 ㎍/㎥" />
+
+	<TextView
+		android:id="@+id/stationAddressTextView"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="15dp"
+		android:gravity="center"
+		android:textColor="@color/white"
+		android:textSize="11sp"
+		app:layout_constraintEnd_toEndOf="@id/divideView2"
+		app:layout_constraintStart_toStartOf="@id/divideView2"
+		app:layout_constraintTop_toBottomOf="@id/divideView2"
+		tools:text="측정소 위치: 서울특별시 서초구 강남대로 201서초구민회관 앞 출입차로(양재동)" />
+
+	<TextView
+		android:id="@+id/noticeInformationTextView"
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:background="@color/custom_statusBar_color"
+		android:drawablePadding="5dp"
+		android:paddingHorizontal="12dp"
+		android:paddingVertical="5dp"
+		android:text="@string/noticeInformationDescription"
+		android:textColor="@color/white_40"
+		android:textSize="12sp"
+		app:drawableStartCompat="@drawable/ic_outline_info_30"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintStart_toStartOf="parent" />
+
+	<View
+		android:id="@+id/divideView"
+		android:layout_width="0dp"
+		android:layout_height="1dp"
+		android:layout_marginTop="20dp"
+		android:background="@color/white_80"
+		app:layout_constraintEnd_toEndOf="@+id/pm25ValueTextView"
+		app:layout_constraintStart_toStartOf="@+id/pm10TextView"
+		app:layout_constraintTop_toBottomOf="@+id/pm25TextView" />
+
+	<View
+		android:id="@+id/divideView2"
+		android:layout_width="0dp"
+		android:layout_height="1dp"
+		android:background="@color/white_80"
+		app:layout_constraintBottom_toTopOf="@+id/stationAddressTextView"
+		app:layout_constraintEnd_toEndOf="@+id/pm25ValueTextView"
+		app:layout_constraintStart_toStartOf="@+id/pm10TextView"
+		app:layout_constraintTop_toBottomOf="@+id/itemLayout" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
