@@ -25,3 +25,8 @@ Work Flow
 5. 위젯 추가
 
 
+백그라운드에서 위치정보 접근
+Access location in the background
+ForeGroundService 구현해주어야 함
+LifeCycle
+
