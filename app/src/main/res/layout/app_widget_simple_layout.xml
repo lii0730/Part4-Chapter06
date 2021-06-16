@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:background="@drawable/widget_outline"
+	android:layout_gravity="center"
+	android:gravity="center"
+	android:orientation="vertical"
+	android:id="@+id/widget_layout">
+
+	<TextView
+		android:id="@+id/pmTitleTextView_widget"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textSize="12sp"
+		android:gravity="center"
+		tools:text="미세먼지"/>
+
+	<ImageView
+		android:id="@+id/pmGradeImageView_widget"
+		android:layout_width="20dp"
+		android:layout_height="20dp"
+		tools:src="@drawable/grade_normal"/>
+
+	<TextView
+		android:id="@+id/pmValueTextView_widget"
+		android:textSize="15sp"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		tools:text="보통"/>
+
+</LinearLayout>

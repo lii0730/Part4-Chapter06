@@ -1,45 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	xmlns:tools="http://schemas.android.com/tools"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
-	android:layout_marginTop="20dp"
-	android:layout_marginBottom="20dp"
-	xmlns:app="http://schemas.android.com/apk/res-auto"
-	xmlns:tools="http://schemas.android.com/tools">
+	android:orientation="horizontal"
+	tools:background="@color/cardview_dark_background">
 
 	<TextView
 		android:id="@+id/labelTextView"
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
+		android:layout_weight="1"
+		android:textColor="@color/white"
+		android:textSize="18sp"
+		android:layout_gravity="center"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintTop_toTopOf="parent"
-		tools:text="아황산가스"
-		android:textSize="18sp"
-		android:layout_weight="1"
-		android:textColor="@color/white"/>
+		tools:text="아황산가스" />
 
 	<TextView
 		android:id="@+id/gradeTextView"
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		app:layout_constraintTop_toTopOf="parent"
+		android:layout_weight="1"
 		android:gravity="end"
-		app:layout_constraintStart_toEndOf="@+id/labelTextView"
-		tools:text="@string/grade_like_text"
 		android:textColor="@color/white"
 		android:textSize="18sp"
-		android:layout_weight="1"/>
+		android:layout_gravity="center"
+		app:layout_constraintStart_toEndOf="@+id/labelTextView"
+		app:layout_constraintTop_toTopOf="parent"
+		tools:text="@string/grade_like_text" />
 
 	<TextView
 		android:id="@+id/valueTextView"
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		app:layout_constraintTop_toTopOf="parent"
-		app:layout_constraintStart_toEndOf="@+id/labelTextView"
-		tools:text="130 ppm"
+		android:layout_weight="1"
 		android:gravity="end"
 		android:textColor="@color/white"
 		android:textSize="18sp"
-		android:layout_weight="1"/>
+		android:layout_gravity="center"
+		app:layout_constraintStart_toEndOf="@+id/labelTextView"
+		app:layout_constraintTop_toTopOf="parent"
+		tools:text="130 ppm" />
 
 </LinearLayout>

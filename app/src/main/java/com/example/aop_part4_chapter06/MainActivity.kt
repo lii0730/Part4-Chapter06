@@ -9,9 +9,11 @@ import android.location.LocationListener
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.example.aop_part4_chapter06.databinding.ActivityMainBinding
 import com.example.aop_part4_chapter06.response.AirKorea.AirKoreaData
@@ -48,6 +50,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 		binding = ActivityMainBinding.inflate(layoutInflater)
 		setContentView(binding.root)
 
+		initSwipeRefreshLayout()
 		initLocationManager()
 		requestPermission()
 	}
@@ -55,6 +58,15 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 	override fun onDestroy() {
 		super.onDestroy()
 		mLocationManager.removeUpdates(mLocationListener)
+	}
+
+	private fun initSwipeRefreshLayout() = with(binding){
+		mainRefreshLayout.setOnRefreshListener {
+			binding.mainConstraintLayout.alpha = 0f
+			binding.progressBar.isVisible = true
+			binding.loadingTextView.isVisible = true
+			setLocationListener()
+		}
 	}
 
 	private fun initLocationManager() {
@@ -157,15 +169,22 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 	private fun fetchAirQualityData(location: Location) {
 		launch {
 			withContext(Dispatchers.IO) {
-
-				val tmLocation = convertLocationSystem(location)
-
-				val station = getNearByMonitoringStation(tmLocation!!.x, tmLocation!!.y)
-
-				val data = station?.let { getData(it.stationName!!) }
-				withContext(Dispatchers.Main) {
-
-					bindData(data, station)
+				try{
+					val tmLocation = convertLocationSystem(location)
+					val station = getNearByMonitoringStation(tmLocation!!.x, tmLocation!!.y)
+					val data = station?.let { getData(it.stationName!!) }
+					//TODO: DB에 대기오염 정보 저장 후 위젯에 파싱 하면?
+					saveDatatoDB(data)
+					withContext(Dispatchers.Main) {
+						bindData(data, station)
+					}
+				} catch (e: Exception) {
+					Log.e("fetchAirQualityData", e.toString())
+				}
+				finally {
+					binding.progressBar.isVisible = false
+					binding.loadingTextView.isVisible = false
+					binding.mainRefreshLayout.isRefreshing = false
 				}
 			}
 		}
@@ -200,8 +219,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
 	//TODO: 데이터 바인딩
 	@SuppressLint("SetTextI18n")
-	private fun bindData(item: Item?, station: AirKoreaData?) = with(binding) {
-		item?.let { item ->
+	private fun bindData(data: Item?, station: AirKoreaData?) = with(binding) {
+		data?.let { item ->
 			//TODO: item -> 대기오염 정보 / station -> 측정소 정보
 			stationNameTextView.text = station?.stationName
 			stationAddressTextView.text = "측정소 위치: ${station?.addr}"
@@ -213,6 +232,9 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 			setO3Data(item)
 			setNo2Data(item)
 		}
+		mainConstraintLayout.animate()
+			.alpha(1f)
+			.start()
 	}
 
 	private fun setKhaiGradeView(item: Item?) = with(binding) {
@@ -223,7 +245,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 					.load(R.drawable.grade_like)
 					.into(khaiGradeImageView)
 
-				mainLayout.setBackgroundResource(R.color.background_grade_like)
+				mainConstraintLayout.setBackgroundResource(R.color.background_grade_like)
 			}
 			"2" -> {
 				khaiGradeTextView.text = "보통"
@@ -231,7 +253,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 					.load(R.drawable.grade_normal)
 					.into(khaiGradeImageView)
 
-				mainLayout.setBackgroundResource(R.color.background_grade_normal)
+				mainConstraintLayout.setBackgroundResource(R.color.background_grade_normal)
 			}
 			"3" -> {
 				khaiGradeTextView.text = "나쁨"
@@ -239,7 +261,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 					.load(R.drawable.grade_bad)
 					.into(khaiGradeImageView)
 
-				mainLayout.setBackgroundResource(R.color.background_grade_bad)
+				mainConstraintLayout.setBackgroundResource(R.color.background_grade_bad)
 			}
 			"4" -> {
 				khaiGradeTextView.text = "매우나쁨"
@@ -247,7 +269,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 					.load(R.drawable.grade_very_bad)
 					.into(khaiGradeImageView)
 
-				mainLayout.setBackgroundResource(R.color.background_grade_very_bad)
+				mainConstraintLayout.setBackgroundResource(R.color.background_grade_very_bad)
 			}
 			else -> {
 				khaiGradeTextView.text = "측정불가"
