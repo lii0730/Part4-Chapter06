@@ -3,25 +3,25 @@ package com.example.aop_part4_chapter06
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.example.aop_part4_chapter06.databinding.ActivityMainBinding
 import com.example.aop_part4_chapter06.response.AirKorea.AirKoreaData
 import com.example.aop_part4_chapter06.response.AirKorea.AirQuality.Item
 import com.example.aop_part4_chapter06.response.Kakao.Documents
-import com.example.aop_part4_chapter06.service.AirKoreaApiService
-import com.example.aop_part4_chapter06.service.KakaoApiService
 import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
@@ -30,12 +30,17 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     private lateinit var binding: ActivityMainBinding
     private lateinit var mLocationManager: LocationManager
     private lateinit var mLocationListener: LocationListener
+
     private val job = Job()
 
     inner class MyLocationListener : LocationListener {
         override fun onLocationChanged(location: Location) {
             //TODO: 대기오염 정보 획득
             fetchAirQualityData(location)
+            ContextCompat.startForegroundService(
+                this@MainActivity,
+                Intent(this@MainActivity, WidgetProvider.UpdateWidgetService::class.java)
+            )
             mLocationManager.removeUpdates(mLocationListener)
         }
 
@@ -54,6 +59,11 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         initSwipeRefreshLayout()
         initLocationManager()
         requestPermission()
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        setLocationListener()
     }
 
     override fun onDestroy() {
@@ -137,41 +147,26 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         val backgroundLocationPermissionGranted =
             requestCode == BACKGROUND_REQUEST_CODE && grantResults[0] == PackageManager.PERMISSION_GRANTED
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            if(!backgroundLocationPermissionGranted) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (!backgroundLocationPermissionGranted) {
                 requestBackgroundPermission()
             } else {
                 setLocationListener()
             }
         } else {
-            if(!locationPermissionGranted) {
+            if (!locationPermissionGranted) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(
                         this,
                         Manifest.permission.ACCESS_FINE_LOCATION
                     )
                 ) {
                     showRequestPermissionPopUp()
+                } else {
+                    requestPermission()
                 }
             } else {
                 setLocationListener()
                 Toast.makeText(this, "권한 허용", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-            //TODO 권한 허용 -> 미세먼지 정보 표출
-            setLocationListener()
-            Toast.makeText(this, "권한 허용", Toast.LENGTH_SHORT).show()
-        } else {
-            //TODO: 권한 거부 사용자 교육 팝업 필요
-            Toast.makeText(this, "권한 거부", Toast.LENGTH_SHORT).show()
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            ) {
-                showRequestPermissionPopUp()
             }
         }
     }
@@ -209,10 +204,9 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                     val tmLocation = convertLocationSystem(location)
                     val station = getNearByMonitoringStation(tmLocation!!.x, tmLocation!!.y)
                     val data = station?.let { getData(it.stationName!!) }
-                    //TODO: DB에 대기오염 정보 저장 후 위젯에 파싱 하면?
-                    saveDatatoDB(data)
+
                     withContext(Dispatchers.Main) {
-                        bindData(data, station)
+                        displayData(data, station)
                     }
                 } catch (e: Exception) {
                     Log.e("fetchAirQualityData", e.toString())
@@ -227,7 +221,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     //TODO: 좌표 변환
     private suspend fun convertLocationSystem(location: Location): Documents? {
-        return RetrofitClient.getKaKaoRetrofit().create(KakaoApiService::class.java)
+        return RetrofitClient.kakaoAPI
             .getTMSystemLocation(
                 location.longitude,
                 location.latitude,
@@ -240,7 +234,7 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         longitude: Double,
         latitude: Double
     ): AirKoreaData? {
-        return RetrofitClient.getAirKoreaRetrofit().create(AirKoreaApiService::class.java)
+        return RetrofitClient.airKoreaAPI
             .getStationName(longitude, latitude).response.body.items?.minByOrNull {
                 it.tm!!
             }
@@ -248,13 +242,13 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
 
     //TODO: 가장 가까운 관측소에서 측정된 대기오염 정보 조회
     private suspend fun getData(stationName: String): Item? {
-        return RetrofitClient.getAirKoreaRetrofit().create(AirKoreaApiService::class.java)
+        return RetrofitClient.airKoreaAPI
             .getAirQualities(stationName).response?.body?.items?.firstOrNull()
     }
 
     //TODO: 데이터 바인딩
     @SuppressLint("SetTextI18n")
-    private fun bindData(data: Item?, station: AirKoreaData?) = with(binding) {
+    private fun displayData(data: Item?, station: AirKoreaData?) = with(binding) {
         data?.let { item ->
             //TODO: item -> 대기오염 정보 / station -> 측정소 정보
             stationNameTextView.text = station?.stationName
@@ -311,6 +305,8 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
                 Glide.with(khaiGradeImageView)
                     .load(R.drawable.grade_unknown)
                     .into(khaiGradeImageView)
+
+                mainConstraintLayout.setBackgroundResource(R.color.background_grade_very_unknown)
             }
         }
     }

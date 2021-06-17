@@ -1,33 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:id="@+id/widget_layout"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
-	xmlns:tools="http://schemas.android.com/tools"
-	android:background="@drawable/widget_outline"
 	android:layout_gravity="center"
-	android:gravity="center"
-	android:orientation="vertical"
-	android:id="@+id/widget_layout">
+	android:gravity="center">
 
-	<TextView
-		android:id="@+id/pmTitleTextView_widget"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:textSize="12sp"
+	<LinearLayout
+		android:id="@+id/widgetContents"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:layout_gravity="center"
+		android:background="@drawable/widget_outline"
 		android:gravity="center"
-		tools:text="미세먼지"/>
+		tools:visibility="visible"
+		android:orientation="vertical"
+		android:visibility="gone">
 
-	<ImageView
-		android:id="@+id/pmGradeImageView_widget"
-		android:layout_width="20dp"
-		android:layout_height="20dp"
-		tools:src="@drawable/grade_normal"/>
+		<TextView
+			android:id="@+id/pmTitleTextView_widget"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center"
+			android:textSize="12sp"
+			android:text="미세먼지" />
 
-	<TextView
-		android:id="@+id/pmValueTextView_widget"
-		android:textSize="15sp"
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		tools:text="보통"/>
+		<ImageView
+			android:id="@+id/pmGradeImageView_widget"
+			android:layout_width="20dp"
+			android:layout_height="20dp"
+			tools:src="@drawable/grade_normal" />
 
-</LinearLayout>
+
+		<TextView
+			android:id="@+id/pmValueTextView_widget"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textSize="15sp"
+			tools:text="보통" />
+	</LinearLayout>
+
+	<ProgressBar
+		android:id="@+id/widgetProgressBar"
+		android:layout_width="30dp"
+		android:layout_height="30dp"
+		android:layout_gravity="center"
+		tools:visibility="gone"/>
+
+</FrameLayout>

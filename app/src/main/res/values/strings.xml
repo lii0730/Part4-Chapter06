@@ -1,7 +1,7 @@
 <resources>
 	<string name="app_name">우리동네 미세먼지</string>
 	<string name="grade_like_text">좋음 😆</string>
-	<string name="grade_normal_text">보통 😀</string>
+	<string name="grade_normal_text">보통 🙂</string>
 	<string name="grade_bad_text">나쁨 😠</string>
 	<string name="grade_very_bad_text">매우나쁨 😡</string>
 	<string name="pmUnit">㎍/㎥</string>

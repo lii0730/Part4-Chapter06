@@ -11,6 +11,7 @@
     <color name="background_grade_like">#953F51B5</color>
     <color name="background_grade_bad">#C6DF7959</color>
     <color name="background_grade_very_bad">#CCFF0000</color>
+    <color name="background_grade_very_unknown">#CC9A9999</color>
     <color name="white_80">#CDFFFFFF</color>
     <color name="white_40">#66FFFFFF</color>
     <color name="custom_statusBar_color">#4B8E4E</color>
